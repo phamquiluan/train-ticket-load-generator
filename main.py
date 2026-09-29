@@ -6,7 +6,8 @@ import time
 
 from queries import Query
 from scenarios import (query_and_preserve, query_and_pay, query_and_consign, query_and_cancel,
-                       query_and_collect, query_and_execute, query_and_rebook, query_and_get_voucher)
+                       query_and_collect, query_and_execute, query_and_rebook, query_and_get_voucher,
+                       trim_orders)
 from datetime import datetime, timedelta, date
 from locust import HttpUser, task, between, constant, events
 
@@ -94,6 +95,6 @@ class UserBooking(HttpUser):
         pause()
         query.query_admin_basic_config()
         pause()
-        query.query_admin_order()
+        trim_orders(query, query.query_admin_order())
         query.query_admin_route()
         query.query_admin_user()

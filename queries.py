@@ -588,8 +588,16 @@ class Query:
                 f"preserve failed, code: {res.status_code}, {res.text}")
         return
 
-    def query_admin_order(self, headers: dict = {}):
-        self._get_admin("/api/v1/adminorderservice/adminorder", "admin order", headers)
+    def query_admin_order(self, headers: dict = {}) -> List[dict]:
+        return self._get_admin("/api/v1/adminorderservice/adminorder", "admin order", headers)
+
+    def delete_admin_order(self, order_id: str, train_number: str, headers: dict = {}):
+        url = f"{self.address}/api/v1/adminorderservice/adminorder/{order_id}/{train_number}"
+        r = self.session.delete(url=url, headers=headers)
+        if r.status_code == 200 and r.json()["status"] == 1:
+            logger.info(f"order {order_id} deleted")
+        else:
+            logger.warning(f"order {order_id} delete failed, code: {r.status_code}, text: {r.text}")
 
     def query_admin_route(self, headers: dict = {}):
         self._get_admin("/api/v1/adminrouteservice/adminroute", "admin route", headers)
@@ -601,9 +609,10 @@ class Query:
         r = self.session.get(url=f"{self.address}{path}", headers=headers)
         if r.status_code == 200 and r.json()["status"] == 1:
             logger.info(f"success to query {name}")
-        else:
-            logger.warning(
-                f"faild to query {name} with status_code: {r.status_code}")
+            return r.json().get("data")
+        logger.warning(
+            f"faild to query {name} with status_code: {r.status_code}")
+        return None
 
     def query_news(self, headers: dict = {}):
         r = self.session.get(url=f"{self.address}/news-service/news", headers=headers)

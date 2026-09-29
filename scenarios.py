@@ -151,3 +151,16 @@ def query_and_get_voucher(q: Query):
     # (orderId, tripId)
     pair = random_from_list(pairs)
     q.get_voucher(order_id=pair[0])
+
+
+def trim_orders(q: Query, orders: list, cap: int = 200, batch: int = 20):
+    """
+    Delete the oldest orders beyond cap. Every order refresh returns all of an
+    account's orders, so an unbounded table makes order/station latency drift up.
+    """
+    if not orders or len(orders) <= cap:
+        return
+
+    oldest = sorted(orders, key=lambda o: o.get("boughtDate") or 0)
+    for o in oldest[:min(batch, len(orders) - cap)]:
+        q.delete_admin_order(o.get("id"), o.get("trainNumber"))
