@@ -46,9 +46,9 @@ def query_and_collect(q: Query):
 
 def query_and_execute(q: Query):
     if random_from_weighted(highspeed_weights):
-        pairs = q.query_orders(types=tuple([1]))
+        pairs = q.query_orders(types=tuple([2]))
     else:
-        pairs = q.query_orders(types=tuple([1]), query_other=True)
+        pairs = q.query_orders(types=tuple([2]), query_other=True)
 
     if not pairs:
         return
@@ -141,3 +141,13 @@ def query_and_rebook(q: Query):
 
     q.rebook_ticket(pair[0], pair[1], pair[1])
     logger.info(f"{order_id} queried and rebooked")
+
+
+def query_and_get_voucher(q: Query):
+    pairs = q.query_orders(types=tuple([1, 2]))
+    if not pairs:
+        return
+
+    # (orderId, tripId)
+    pair = random_from_list(pairs)
+    q.get_voucher(order_id=pair[0])

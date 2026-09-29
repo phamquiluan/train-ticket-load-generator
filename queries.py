@@ -6,7 +6,8 @@ import random
 from utils import *
 
 logger = logging.getLogger("auto-queries")
-datestr = time.strftime("%Y-%m-%d", time.localtime())
+def today() -> str:
+    return time.strftime("%Y-%m-%d", time.localtime())
 
 
 class Query:
@@ -45,8 +46,8 @@ class Query:
             # password + '","verificationCode":"1234"}'
 
         # 获取cookies
-        # verify_url = self.address + '/api/v1/verifycode/generate'
-        # r = self.session.get(url=verify_url)
+        verify_url = self.address + '/api/v1/verifycode/generate'
+        self.session.get(url=verify_url)
         r = self.session.post(url=url, headers=headers, data=data, verify=False)
 
         if r.status_code == 200:
@@ -82,7 +83,7 @@ class Query:
             place_pair = random.choice(place_pairs)
 
         if time == "":
-            time = datestr
+            time = today()
 
         payload = {
             "departureTime": time,
@@ -116,7 +117,7 @@ class Query:
             place_pair = random.choice(place_pairs)
 
         if time == "":
-            time = datestr
+            time = today()
 
         payload = {
             "departureTime": time,
@@ -157,7 +158,7 @@ class Query:
             place_pair = random.choice(place_pairs)
 
         if time == "":
-            time = datestr
+            time = today()
 
         payload = {
             "departureTime": time,
@@ -196,7 +197,7 @@ class Query:
             place_pair = random.choice(place_pairs)
 
         if date == "":
-            date = datestr
+            date = today()
 
         payload = {
             "departureTime": date,
@@ -486,7 +487,7 @@ class Query:
         url = f"{self.address}/api/v1/rebookservice/rebook"
 
         if new_date == "":
-            new_date = datestr
+            new_date = today()
 
         if new_seat_type == "":
             new_seat_type = random_from_list(["2", "3"])
@@ -521,7 +522,7 @@ class Query:
 
     def preserve(self, start: str, end: str, trip_ids: List = [], is_high_speed: bool = True, date: str = "", headers: dict = {}):
         if date == "":
-            date = datestr
+            date = today()
 
         if is_high_speed:
             PRESERVE_URL = f"{self.address}/api/v1/preserveservice/preserve"
@@ -586,3 +587,44 @@ class Query:
             logger.error(
                 f"preserve failed, code: {res.status_code}, {res.text}")
         return
+
+    def query_admin_order(self, headers: dict = {}):
+        self._get_admin("/api/v1/adminorderservice/adminorder", "admin order", headers)
+
+    def query_admin_route(self, headers: dict = {}):
+        self._get_admin("/api/v1/adminrouteservice/adminroute", "admin route", headers)
+
+    def query_admin_user(self, headers: dict = {}):
+        self._get_admin("/api/v1/adminuserservice/users", "admin user", headers)
+
+    def _get_admin(self, path: str, name: str, headers: dict = {}):
+        r = self.session.get(url=f"{self.address}{path}", headers=headers)
+        if r.status_code == 200 and r.json()["status"] == 1:
+            logger.info(f"success to query {name}")
+        else:
+            logger.warning(
+                f"faild to query {name} with status_code: {r.status_code}")
+
+    def query_news(self, headers: dict = {}):
+        r = self.session.get(url=f"{self.address}/news-service/news", headers=headers)
+        if r.status_code == 200:
+            logger.info("query news success")
+        else:
+            logger.warning(f"query news failed, code: {r.status_code}")
+
+    def query_offices(self, headers: dict = {}):
+        r = self.session.get(url=f"{self.address}/office/getAll", headers=headers)
+        if r.status_code == 200:
+            logger.info("query offices success")
+        else:
+            logger.warning(f"query offices failed, code: {r.status_code}")
+
+    def get_voucher(self, order_id, headers: dict = {}):
+        url = f"{self.address}/getVoucher"
+        r = self.session.post(url=url, headers=headers, json={"orderId": order_id, "type": 1})
+        if r.status_code == 200:
+            logger.info(f"order {order_id} get voucher success")
+        else:
+            logger.warning(
+                f"order {order_id} get voucher failed, code: {r.status_code}, text: {r.text}")
+        return order_id
